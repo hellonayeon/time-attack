@@ -10,6 +10,11 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
         integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
+    <!-- Google Font 'Do Hyeon' -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
+
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -22,45 +27,139 @@
 
     <title></title>
 
-    <script>
-        let cnt = 0
-        let groups
+    <style>
+        * {
+            font-family: 'Do Hyeon', sans-serif;
+        }
+        .wrap-container {
+            width: 800px;
+            margin: auto;
+        }
+    </style>
 
-        function set_recommend_system() {
+    <script>
+        const group_len = 3
+        let group_idx
+
+        let codes
+        let codes_idx
+
+        let stock_info
+
+
+        /* 페이지 로딩 시 호출 */
+        $(document).ready(function() {
+            console.log("page is loaded")
+            group_idx = 0
+
+            codes = []
+            codes_idx = 0
+
+            stock_info = []
+        })
+
+        /* 다음 내용을 출력할 것인지 검사 */
+        function check() {
+            let value = $("input[name='radio-group']:checked").val()
+            console.log(value)
+
+            if(value == undefined) {
+                alert('내용을 선택해주세요 !')
+                return
+            }
+
+            codes[codes_idx++] = value
+            if(group_idx < group_len) {
+                show_group_info(value)
+            }
+            else {
+                show_stock_info()
+            }
+        }
+
+        /* 그룹별 항목들 출력 */
+        function show_group_info(input_value) {
+            req_data = {"group_idx_give": group_idx++, "input_value_give": input_value}
             $.ajax({
-                type: "GET",
-                url: '/base/code',
-                data: {},
-                success: function(response){
-                    groups = response[0]['groups']
-                    $('#group-box').remove()
+                type: "POST",
+                url: "/code",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(req_data),
+                success: function(response) {
+                    console.log(response)
+
+                    let group_info = response
+                    console.log(group_info.length)
+                    $('#contents-box').empty()
+                    for(let i = 0; i < group_info.length; i++) {
+                        let info = group_info[i]
+                        console.log(info['code'])
+                        let tmp_html = `<div class="form-check" id="form-radio">
+                                          <input class="form-check-input" type="radio" name="radio-group" value="${info['code']}">
+                                            ${info["name"]}
+                                          </label>
+                                        </div>`
+
+                        $("#contents-box").append(tmp_html)
+                    }
+
+                    let btn_html = `<button type="button" class="btn btn-success" onclick="check()">다음</button>`
+                    $('#contents-box').append(btn_html)
                 }
             })
         }
 
-        function listing() {
+        /* 종목 정보 출력 */
+        function show_stock_info() {
+            console.log("call show_stock_info")
             $.ajax({
-                type: "GET",
-                url: '/code',
-                data: {'group_give': groups[cnt]},
-                success: function(response){
-                    groups = response[0]['groups']
-                    $('#group-box').remove()
+                type: "POST",
+                url: "/stock",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(codes),
+                success: function(response) {
+                    stock_info = response
+
+                    $('#contents-box').empty()
+                    for(let i = 0; i < stock_info.length; i++) {
+                        info = stock_info[i]
+
+                        let tmp_html = `<p>
+                                            <span>${info["name"]}</span>
+                                            <button type="button" class="btn btn-success" onclick="show_stock_detail(${i})">정보</button>
+                                        </p>`
+
+                        $('#contents-box').append(tmp_html)
+                    }
+
+                    let tmp_html = `<button type="button" class="btn btn-secondary" onclick="window.location.reload()">다시선택</button>`
+                    $('#contents-box').append(tmp_html)
                 }
             })
+        }
+
+        function show_stock_detail(idx) {
+            let info = stock_info[idx]
+            console.log("idx = " + idx)
+            detail = "주가 총액: " + info["stock_price"] + "\n"
+                   + "시가 총액: " + info["market_price"] + "\n"
+                   + "PER: " + info["PER"]
+            alert(detail)
         }
 
     </script>
 </head>
 
 <body>
-    <div class="jumbotron">
-        <h1 class="display-4">주식 종목 추천</h1>
-        <p class="lead">원하시는 종목을 추천합니다</p>
-        <hr class="my-4">
-        <p class="lead" id="group-box">
-            <button onclick="set_recommend_system()" id="btn-post-box" type="button" class="btn btn-primary">추천 시작</button>
-        </p>
+    <div class="wrap-container">
+        <div class="jumbotron">
+            <h1 class="display-4">주식 종목 추천</h1>
+            <p class="lead">원하시는 종목을 추천합니다</p>
+            <hr class="my-4">
+            <p class="lead" id="contents-box">
+                <button onclick="show_group_info('')" id="btn-post-box" type="button" class="btn btn-primary">추천 시작</button>
+            </p>
+        </div>
     </div>
 </body>
 

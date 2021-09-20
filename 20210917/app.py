@@ -17,7 +17,7 @@ import re
 # 클라이언트에서 이 정보에 대해 요청해서 이 정보를 갖고 있는 다는 것은 비효율적이라 생각 (왜? 다 똑같이 가지고 있어야 하는 값이며, 사용자에따라 변하지 않는 값이니까)
 groups = list(db.codes.distinct("group"))
 
-@app.route("/")
+@app.route("/", methods=["GET"])
 def home():
     return render_template('index.html')
 
@@ -57,7 +57,6 @@ def get_group_info():
 @app.route('/stock', methods=["POST"])
 def get_stock_info():
     codes_receive = request.json
-    condition = {}
     print(codes_receive)
     stocks = list(db.stocks.find({"market": codes_receive[0], "sector": codes_receive[1], "tag": codes_receive[2]}, {"_id": False}))
     print(stocks)
@@ -90,6 +89,33 @@ def get_stock_info():
     print(stock_info)
 
     return jsonify(stock_info)
+
+@app.route("/bookmark", methods=["POST"])
+def add_bookmark():
+    info_receive = request.json
+    print(info_receive)
+    db.bookmark.insert_one(info_receive)
+
+    return jsonify({"msg": "즐겨찾기 추가 완료 !"})
+
+
+@app.route("/bookmark", methods=["GET"])
+def bookmark():
+    return render_template("bookmark.html")
+
+@app.route("/bookmark/list", methods=["GET"])
+def get_bookmark():
+    bookmarks = list(db.bookmark.find({}, {"_id": False}))
+    print(bookmarks)
+
+    return jsonify(bookmarks)
+
+@app.route("/bookmark/delete", methods=["POST"])
+def delete_bookmark():
+    name_receive = request.form["name_give"]
+    db.bookmark.delete_many({"name": name_receive})
+
+    return jsonify({"msg": "즐겨찾기 취소 완료 !"})
 
 if __name__ == '__main__':
     app.run('0.0.0.0', port=5000, debug=True)

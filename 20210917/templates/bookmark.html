@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <!-- Google Font 'Do Hyeon' -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+
+    <title></title>
+
+    <style>
+        * {
+            font-family: 'Do Hyeon', sans-serif;
+        }
+        .wrap-container {
+            width: 800px;
+            margin: auto;
+        }
+
+    </style>
+    <script>
+        let bookmark_stock_info
+
+        $(document).ready(function() {
+            bookmark_stock_info = []
+
+            listing()
+        })
+
+        function listing() {
+            $.ajax({
+                type: "GET",
+                url: "/bookmark/list",
+                success: function(response) {
+                    console.log(response)
+                    bookmark_stock_info = response
+
+                    for(let i = 0; i < bookmark_stock_info.length; i++) {
+                        let info = bookmark_stock_info[i]
+                        let tmp_html = `<tr>
+                                          <th scope="row" class="col-md-1">${i+1}</th>
+                                          <td class="col-md-7">${info["name"]}</td>
+                                          <td class="col-md-2"><button type="button" class="btn btn-danger" onclick="delete_bookmark(${i})">취소</button></td>
+                                          <td class="col-md-2"><button type="button" class="btn btn-primary" onclick="show_stock_detail(${i})">정보</button></td>
+                                        </tr>`
+
+                        $('#bookmark_list').append(tmp_html)
+                    }
+                }
+            })
+        }
+
+        /* 즐겨찾기 삭제 */
+        function delete_bookmark(idx) {
+            $.ajax({
+                type: "POST",
+                url: "/bookmark/delete",
+                data: {"name_give": bookmark_stock_info[idx]["name"]},
+                success: function(response) {
+                    alert(response["msg"])
+                    window.location.reload()
+                }
+            })
+        }
+
+
+        /* 종목 정보 출력 */
+        function show_stock_detail(idx) {
+            let info = bookmark_stock_info[idx]
+            console.log("idx = " + idx)
+            detail = "주가 총액: " + info["stock_price"] + "\n"
+                   + "시가 총액: " + info["market_price"] + "\n"
+                   + "PER: " + info["PER"]
+            alert(detail)
+        }
+
+    </script>
+
+    <title>주식 종목 추천 사이트</title>
+
+</head>
+<body>
+    <div class="wrap-container">
+        <nav class="nav">
+            <a class="nav-link active disabled" aria-current="true" href="/">추천</a>
+            <a class="nav-link" href="#">즐겨찾기</a>
+        </nav>
+        <div class="jumbotron">
+            <h1 class="display-4">즐겨찾기 목록</h1>
+            <p class="lead">즐겨찾기한 종목을 보여드려요~</p>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">종목</th>
+                            <th scope="col">즐겨찾기 취소</th>
+                            <th scope="col">종목</th>
+                        <tr>
+                    </thead>
+                    <tbody id="bookmark_list">
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -25,7 +25,7 @@
         integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
         crossorigin="anonymous"></script>
 
-    <title></title>
+    <title>주식 종목 추천 사이트</title>
 
     <style>
         * {
@@ -45,7 +45,6 @@
         let codes_idx
 
         let stock_info
-
 
         /* 페이지 로딩 시 호출 */
         $(document).ready(function() {
@@ -126,6 +125,7 @@
 
                         let tmp_html = `<p>
                                             <span>${info["name"]}</span>
+                                            <button type="button" class="btn btn-warning" onclick="add_bookmark(${i})">즐겨찾기</button>
                                             <button type="button" class="btn btn-success" onclick="show_stock_detail(${i})">정보</button>
                                         </p>`
 
@@ -138,6 +138,7 @@
             })
         }
 
+        /* 종목 정보 출력 */
         function show_stock_detail(idx) {
             let info = stock_info[idx]
             console.log("idx = " + idx)
@@ -147,11 +148,30 @@
             alert(detail)
         }
 
+        /* 즐겨찾기 추가 */
+        function add_bookmark(idx) {
+            let info = stock_info[idx]
+            console.log(info)
+
+            $.ajax({
+                type: "POST",
+                url: "/bookmark",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(info),
+                success: function(response) {
+                    alert(response["msg"])
+                }
+            })
+        }
     </script>
 </head>
 
 <body>
     <div class="wrap-container">
+        <nav class="nav">
+            <a class="nav-link active" aria-current="true" href="#">추천</a>
+            <a class="nav-link disabled" href="/bookmark">즐겨찾기</a>
+        </nav>
         <div class="jumbotron">
             <h1 class="display-4">주식 종목 추천</h1>
             <p class="lead">원하시는 종목을 추천합니다</p>

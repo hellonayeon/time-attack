@@ -51,16 +51,12 @@
                 type: "GET",
                 url: "/bookmark/list",
                 success: function(response) {
-                    console.log(response)
-                    bookmark_stock_info = response
-
-                    for(let i = 0; i < bookmark_stock_info.length; i++) {
-                        let info = bookmark_stock_info[i]
+                    for(let i = 0; i < response.length; i++) {
                         let tmp_html = `<tr>
                                           <th scope="row" class="col-md-1">${i+1}</th>
-                                          <td class="col-md-7">${info["name"]}</td>
-                                          <td class="col-md-2"><button type="button" class="btn btn-danger" onclick="delete_bookmark(${i})">취소</button></td>
-                                          <td class="col-md-2"><button type="button" class="btn btn-primary" onclick="show_stock_detail(${i})">정보</button></td>
+                                          <td class="col-md-7">${response[i]["name"]}</td>
+                                          <td class="col-md-2"><button type="button" class="btn btn-danger" onclick="delete_bookmark('${response[i]["code"]}')">취소</button></td>
+                                          <td class="col-md-2"><button type="button" class="btn btn-primary" onclick="show_stock_detail('${response[i]["code"]}')">정보</button></td>
                                         </tr>`
 
                         $('#bookmark_list').append(tmp_html)
@@ -70,11 +66,11 @@
         }
 
         /* 즐겨찾기 삭제 */
-        function delete_bookmark(idx) {
+        function delete_bookmark(code) {
             $.ajax({
                 type: "POST",
                 url: "/bookmark/delete",
-                data: {"name_give": bookmark_stock_info[idx]["name"]},
+                data: {"code": code},
                 success: function(response) {
                     alert(response["msg"])
                     window.location.reload()
@@ -84,15 +80,19 @@
 
 
         /* 종목 정보 출력 */
-        function show_stock_detail(idx) {
-            let info = bookmark_stock_info[idx]
-            console.log("idx = " + idx)
-            detail = "주가 총액: " + info["stock_price"] + "\n"
-                   + "시가 총액: " + info["market_price"] + "\n"
-                   + "PER: " + info["PER"]
-            alert(detail)
+        function show_stock_detail(code) {
+            console.log(code)
+            $.ajax({
+                type: "GET",
+                url: `/stock?code=${code}`,
+                success: function(response) {
+                    detail = "주가 총액: " + response["stock_price"] + "\n"
+                           + "시가 총액: " + response["market_price"] + "\n"
+                           + "PER: " + response["PER"]
+                    alert(detail)
+                }
+            })
         }
-
     </script>
 
     <title>주식 종목 추천 사이트</title>

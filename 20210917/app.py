@@ -11,93 +11,53 @@ from bs4 import BeautifulSoup
 # 문자열 전처리
 import re
 
-# 'codes' 그룹 리스트
-# 이 정보를 클라이언트쪽에서 갖고 있어야 하는가? 서버 쪽에서 갖고 있어야 하는가?
-# 그룹들에 대한 정보는 모든 사용자에게 동일하게 적용되므로, 서버에서 그룹 리스트를 관리하는게 맞다고 판단
-# 클라이언트에서 이 정보에 대해 요청해서 이 정보를 갖고 있는 다는 것은 비효율적이라 생각 (왜? 다 똑같이 가지고 있어야 하는 값이며, 사용자에따라 변하지 않는 값이니까)
-groups = list(db.codes.distinct("group"))
-
 @app.route("/", methods=["GET"])
 def home():
     return render_template('index.html')
 
-@app.route("/code", methods=["POST"])
+@app.route("/code/base", methods=["GET"])
+def set_base_code():
+    groups = list(db.codes.distinct("group"))
+    return jsonify({"all_group": groups})
+
+@app.route("/code", methods=["GET"])
 def get_group_info():
-    receive = request.json
-    group_idx_receive = int(receive["group_idx_give"])
-    input_value_receive = receive["input_value_give"]
+    group = request.args.get("group")
+    print(group)
 
-    print(f"receive = {group_idx_receive, input_value_receive}")
-
-    # group_info = [] # 딕셔너리에 대한 리스트
-    # if input_value_receive == '':
-    #     group_info = list(db.codes.find({"group": groups[group_idx_receive]}, {"_id": False}))
-    # else :
-    #     # 사용자가 선택한 이전의 필드 값을 바탕으로 다음 그룹에 해당되는 리스트 추출
-    #     # ex) market-2의 경우 sector-1, sector-2 가 있음 (sector-3는 없음)
-    #     src = groups[group_idx_receive-1]
-    #     target = groups[group_idx_receive]
-    #     print(f"db search condition = {src, target}")
-    #     search_key = list(db.stocks.distinct(target, {src: input_value_receive}))
-    #     print(f"search key = {search_key}")
-    #     doc = {}
-    #
-    #     group_info = list(db.codes.find({"code": {"$in": search_key}}, {"_id": False}))
-    #     print(type(group_info))
-    #
-    # print(group_info)
-
-    group_info = list(db.codes.find({"group": groups[group_idx_receive]}, {"_id": False}))
+    group_info = list(db.codes.find({"group": group}, {"_id": False}))
     return jsonify(group_info)
 
+@app.route('/stocks', methods=["POST"])
+def get_stocks_info():
+    codes = request.json
+    print(codes)
+    stocks = list(db.stocks.find(codes, {"_id": False}))
+    return jsonify(stocks)
 
-# 1. 사용자가 입력한 code('codes' collection)들을 바탕으로
-# stocks 컬렉션에서 code('stocks' collection)을 찾는다.
-# 2. 찾은 code('stocks' collection)을 바탕으로 웹 스크래핑 수행
-@app.route('/stock', methods=["POST"])
-def get_stock_info():
-    codes_receive = request.json
-    print(codes_receive)
-    stocks = list(db.stocks.find({"market": codes_receive[0], "sector": codes_receive[1], "tag": codes_receive[2]}, {"_id": False}))
-    print(stocks)
+@app.route('/stock', methods=["GET"])
+def get_stocks_detail():
+    code = request.args.get("code")
 
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'}
+    data = requests.get(f"https://finance.naver.com/item/main.nhn?code={code}", headers=headers)  # headers=headers 브라우저에서 검색한 것 처럼 만들어주는 속성
+    soup = BeautifulSoup(data.text, 'html.parser')
 
-    stock_info = []
-    for stock in stocks:
-        data = requests.get(f"https://finance.naver.com/item/main.nhn?code={stock['code']}", headers=headers)  # headers=headers 브라우저에서 검색한 것 마냥 만들어주는 속성
+    stock_price = soup.select("#chart_area > div.rate_info > div > p.no_today > em > span.blind")[0].text
+    market_price = re.sub('[^A-Za-z0-9가-힣]', '', soup.select("#_market_sum")[0].text)
+    PER = soup.select("#_per")[0].text
 
-        soup = BeautifulSoup(data.text, 'html.parser')
-
-        # 종목명
-        name = stock["name"]
-        # 주가 총액
-        stock_price = soup.select("#chart_area > div.rate_info > div > p.no_today > em > span.blind")[0].text
-        # 시가 총액
-        market_price = re.sub('[^A-Za-z0-9가-힣]', '', soup.select("#_market_sum")[0].text)
-        # PER
-        PER = soup.select("#_per")[0].text
-
-        doc = {
-            "name": name,
-            "stock_price": stock_price,
-            "market_price": market_price,
-            "PER": PER
-        }
-        stock_info.append(doc)
-
-    print(stock_info)
-
-    return jsonify(stock_info)
+    return jsonify({"stock_price": stock_price, "market_price": market_price, "PER": PER})
 
 @app.route("/bookmark", methods=["POST"])
 def add_bookmark():
-    info_receive = request.json
-    print(info_receive)
-    db.bookmark.insert_one(info_receive)
+    code = request.form["code"]
+    print(code)
+    stock = db.stocks.find_one({"code": code}, {"_id": False})
+    print(stock)
+    db.bookmark.insert_one(stock)
 
     return jsonify({"msg": "즐겨찾기 추가 완료 !"})
-
 
 @app.route("/bookmark", methods=["GET"])
 def bookmark():
@@ -112,8 +72,8 @@ def get_bookmark():
 
 @app.route("/bookmark/delete", methods=["POST"])
 def delete_bookmark():
-    name_receive = request.form["name_give"]
-    db.bookmark.delete_many({"name": name_receive})
+    code = request.form["code"]
+    db.bookmark.delete_many({"code": code})
 
     return jsonify({"msg": "즐겨찾기 취소 완료 !"})
 

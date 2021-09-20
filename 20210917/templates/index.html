@@ -38,24 +38,31 @@
     </style>
 
     <script>
-        const group_len = 3
-        let group_idx
+        // 초기 데이터(그룹 항목) 저장
+        let groups
+        let groups_idx = 0
 
-        let codes
-        let codes_idx
+        // 사용자가 선택한 값 저장
+        let select_groups
 
-        let stock_info
 
         /* 페이지 로딩 시 호출 */
         $(document).ready(function() {
-            console.log("page is loaded")
-            group_idx = 0
-
-            codes = []
-            codes_idx = 0
-
-            stock_info = []
+            set_base_code()
+            groups_idx = 0
+            select_groups = []
         })
+
+        /* 초기 데이터 설정 */
+        function set_base_code() {
+            $.ajax({
+                type: "GET",
+                url: "/code/base",
+                success: function(response) {
+                    groups = response["all_group"]
+                }
+            })
+        }
 
         /* 다음 내용을 출력할 것인지 검사 */
         function check() {
@@ -67,8 +74,8 @@
                 return
             }
 
-            codes[codes_idx++] = value
-            if(group_idx < group_len) {
+            select_groups[groups_idx++] = value
+            if(groups_idx < groups.length) {
                 show_group_info(value)
             }
             else {
@@ -77,18 +84,14 @@
         }
 
         /* 그룹별 항목들 출력 */
-        function show_group_info(input_value) {
-            req_data = {"group_idx_give": group_idx++, "input_value_give": input_value}
+        function show_group_info() {
             $.ajax({
-                type: "POST",
-                url: "/code",
-                contentType: "application/json; charset=utf-8",
-                data: JSON.stringify(req_data),
+                type: "GET",
+                url: `/code?group=${groups[groups_idx]}`,
                 success: function(response) {
                     console.log(response)
 
                     let group_info = response
-                    console.log(group_info.length)
                     $('#contents-box').empty()
                     for(let i = 0; i < group_info.length; i++) {
                         let info = group_info[i]
@@ -110,23 +113,23 @@
 
         /* 종목 정보 출력 */
         function show_stock_info() {
-            console.log("call show_stock_info")
+            let data = {}
+            groups.forEach(function (code, idx) {
+                data[code] = select_groups[idx]
+            });
+
             $.ajax({
                 type: "POST",
-                url: "/stock",
+                url: "/stocks",
                 contentType: "application/json; charset=utf-8",
-                data: JSON.stringify(codes),
+                data: JSON.stringify(data),
                 success: function(response) {
-                    stock_info = response
-
                     $('#contents-box').empty()
-                    for(let i = 0; i < stock_info.length; i++) {
-                        info = stock_info[i]
-
+                    for(let i = 0; i < response.length; i++) {
                         let tmp_html = `<p>
-                                            <span>${info["name"]}</span>
-                                            <button type="button" class="btn btn-warning" onclick="add_bookmark(${i})">즐겨찾기</button>
-                                            <button type="button" class="btn btn-success" onclick="show_stock_detail(${i})">정보</button>
+                                            <span>${response[i]["name"]}</span>
+                                            <button type="button" class="btn btn-warning" onclick="add_bookmark('${response[i]["code"]}')">즐겨찾기</button>
+                                            <button type="button" class="btn btn-success" onclick="show_stock_detail('${response[i]["code"]}')">정보</button>
                                         </p>`
 
                         $('#contents-box').append(tmp_html)
@@ -139,25 +142,26 @@
         }
 
         /* 종목 정보 출력 */
-        function show_stock_detail(idx) {
-            let info = stock_info[idx]
-            console.log("idx = " + idx)
-            detail = "주가 총액: " + info["stock_price"] + "\n"
-                   + "시가 총액: " + info["market_price"] + "\n"
-                   + "PER: " + info["PER"]
-            alert(detail)
+        function show_stock_detail(code) {
+            console.log(code)
+            $.ajax({
+                type: "GET",
+                url: `/stock?code=${code}`,
+                success: function(response) {
+                    detail = "주가 총액: " + response["stock_price"] + "\n"
+                           + "시가 총액: " + response["market_price"] + "\n"
+                           + "PER: " + response["PER"]
+                    alert(detail)
+                }
+            })
         }
 
         /* 즐겨찾기 추가 */
-        function add_bookmark(idx) {
-            let info = stock_info[idx]
-            console.log(info)
-
+        function add_bookmark(code) {
             $.ajax({
                 type: "POST",
                 url: "/bookmark",
-                contentType: "application/json; charset=utf-8",
-                data: JSON.stringify(info),
+                data: {"code": code},
                 success: function(response) {
                     alert(response["msg"])
                 }
@@ -177,7 +181,7 @@
             <p class="lead">원하시는 종목을 추천합니다</p>
             <hr class="my-4">
             <p class="lead" id="contents-box">
-                <button onclick="show_group_info('')" id="btn-post-box" type="button" class="btn btn-primary">추천 시작</button>
+                <button onclick="show_group_info()" id="btn-post-box" type="button" class="btn btn-primary">추천 시작</button>
             </p>
         </div>
     </div>

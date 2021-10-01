@@ -67,24 +67,22 @@
                 url: "/memo",
                 success: function(response) {
                     console.log(response)
-                    makeMemos(response)
+                    $('#memo-list').empty()
+                    for(let i = 0; i < response.length; i++) {
+                        let memo = response[i]
+                        makeMemo(memo, i)
+                    }
                 }
             })
         }
 
-        function makeMemos(memos) {
-            $('#memo-list').empty()
-
-            let tbody_html = ``
-            for(let i = 0; i < memos.length; i++) {
-                let memo = memos[i]
-                tbody_html += `<tr>
-                                    <td>${i+1}</td>
+        function makeMemo(memo, index) {
+            let tbody_html = `<tr>
+                                    <td>${index+1}</td>
                                     <td>${memo['title']}</td>
                                     <td>${memo['date']}</td>
-                                    <td><button type="button" class="btn btn-danger" onclick="deleteMemo('${memo['date']}')">삭제</button></td>
+                                    <td><button type="button" class="btn btn-danger" onclick="deleteMemo(${memo['index']})">삭제</button></td>
                                </tr>`
-            }
 
             $('#memo-list').append(tbody_html)
         }
@@ -110,11 +108,11 @@
             })
         }
 
-        function deleteMemo(date) {
+        function deleteMemo(index) {
             $.ajax({
                 type: "POST",
                 url: "/memo/delete",
-                data: {'date': date},
+                data: {'index': index},
                 success: function(response) {
                     alert(response['msg'])
                     getMemos()

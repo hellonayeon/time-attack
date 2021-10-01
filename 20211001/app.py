@@ -7,6 +7,9 @@ db = client.dbmemo
 
 import datetime
 
+global memo_idx
+memo_idx = 0
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -20,6 +23,10 @@ def get_memo():
 def add_memo():
     memo_info = request.json
 
+    global memo_idx
+    memo_info['index'] = memo_idx
+    memo_idx += 1
+
     # 메모 작성 날짜 시간
     date = datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S')
     memo_info['date'] = date
@@ -28,10 +35,11 @@ def add_memo():
 
     return jsonify({'msg': 'success'})
 
+# index = memo id
 @app.route('/memo/delete', methods=['POST'])
 def delete_memo():
-    date = request.form['date']
-    db.memo.delete_one({"date": date})
+    index = int(request.form['index'])
+    db.memo.delete_one({"index": index})
 
     return jsonify({'msg': 'success'})
 

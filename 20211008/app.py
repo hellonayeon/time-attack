@@ -37,7 +37,14 @@ def save_post():
 
 @app.route('/post', methods=['GET'])
 def get_post():
-    posts = list(db.post.find({}, {'_id': False}).sort([("reg_date", -1)]))
+    sort = request.args.get('sort')
+
+    posts = []
+    if sort is None:
+        posts = list(db.post.find({}, {'_id': False}).sort([("reg_date", -1)]))
+    else:
+        posts = list(db.post.find({}, {'_id': False}).sort([("looked", int(sort))]))
+
     for a in posts:
         a['reg_date'] = a['reg_date'].strftime('%Y.%m.%d %H:%M:%S')
 

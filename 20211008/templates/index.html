@@ -12,6 +12,9 @@
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
           crossorigin="anonymous">
 
+    <!-- Font Awesome CSS -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
     <!-- JS -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
@@ -50,10 +53,11 @@
             border: black solid;
             border-radius: 5px;
         }
+
+
     </style>
     <script>
         $(document).ready(function () {
-            $("#cards-box").html("");
             showArticles();
         });
 
@@ -108,17 +112,19 @@
                 url: "/post",
                 data: {},
                 success: function (response) {
-                    let posts = response["posts"];
-                    for (let i = 0; i < posts.length; i++) {
-                        makeListPost(posts[i], i);
-                    }
+                    makePosts(response["posts"]);
                 }
             })
         }
 
-        function makeListPost(post, index) {
-            let tempHtml = ` <tr>
-                      <th scope="row">${index + 1}</th>
+        function makePosts(posts) {
+            $('#list-post').empty() // 기존에 그려진 내용들 지우기
+
+            let tempHtml = ``;
+            for (let i = 0; i < posts.length; i++) {
+                let post = posts[i];
+                tempHtml += ` <tr>
+                      <th scope="row">${i + 1}</th>
                       <td><a href="#" onclick="showArticleDetail(${post['idx']}, '${post['title']}', '${post['content']}')">${post['title']}</a></td>
                       <td>${post['reg_date']}</td>
                       <td>${post['looked']}</td>
@@ -126,6 +132,7 @@
                       <td><button type="button" class="btn btn-danger" onclick="deleteArticle(${post['idx']})">삭제</button></td>
                       </tr>
                     `;
+            }
             $("#list-post").append(tempHtml);
         }
 
@@ -187,6 +194,27 @@
             })
         }
 
+        function sortArticle() {
+            let sort;
+            if($('#article-looked-i').hasClass('fa-arrow-down')) {
+                sort = -1 // 내림차순
+                $('#article-looked-i').removeClass('fa-arrow-down').addClass('fa-arrow-up')
+            }
+            else {
+                sort = 1 // 오름차순
+                $('#article-looked-i').removeClass('fa-arrow-up').addClass('fa-arrow-down')
+            }
+
+            $.ajax({
+                type: "GET",
+                url: `/post?sort=${sort}`,
+                data: {},
+                success: function (response) {
+                    makePosts(response["posts"]);
+                }
+            })
+        }
+
     </script>
 
 </head>
@@ -220,7 +248,7 @@
             <th scope="col">#</th>
             <th scope="col">제목</th>
             <th scope="col">날짜</th>
-            <th scope="col" onclick="">조회</th>
+            <th scope="col" onclick="sortArticle()">조회<i class="fa fa-arrow-down" aria-hidden="true" id="article-looked-i"></i></th>
             <th scope="col">삭제</th>
             <th scope="col">수정</th>
         </tr>
@@ -237,13 +265,15 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Modal title</h5>
-        <button type="button" class="btn-close modal-close-btn" data-bs-dismiss="modal" aria-label="Close" onclick></button>
+        <button type="button" class="close modal-close-btn" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
       <div class="modal-body">
         <p>Modal body text goes here.</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary modal-close-btn" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary modal-close-btn" data-dismiss="modal">Close</button>
       </div>
     </div>
   </div>

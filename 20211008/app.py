@@ -53,12 +53,19 @@ def delete_post():
 
 @app.route('/post', methods=['UPDATE'])
 def update_post():
-    idx = int(request.form.get('idx'))
+    idx = request.form.get('idx')
     title = request.form.get('title')
     content = request.form.get('content')
     print(idx, title, content)
 
-    db.post.update_one({'idx': idx}, {'$set': {'title': title, 'content': content}})
+    db.post.update_one({'idx': int(idx)}, {'$set': {'title': title, 'content': content}})
+    return {"result": "success"}
+
+
+@app.route('/post/looked', methods=['UPDATE'])
+def update_looked():
+    idx = request.args.get('idx')
+    db.post.update_one({'idx': int(idx)}, {"$inc": {'looked': 1}})
     return {"result": "success"}
 
 

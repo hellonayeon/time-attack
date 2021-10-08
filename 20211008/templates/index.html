@@ -119,10 +119,10 @@
         function makeListPost(post, index) {
             let tempHtml = ` <tr>
                       <th scope="row">${index + 1}</th>
-                      <td><a>${post['title']}</a></td>
+                      <td><a href="#" onclick="showArticleDetail(${post['idx']}, '${post['title']}', '${post['content']}')">${post['title']}</a></td>
                       <td>${post['reg_date']}</td>
                       <td>${post['looked']}</td>
-                      <td><button type="button" class="btn btn-primary" onclick="openClose(${post['idx']}, ${post['title']}, ${post['content']})">수정</button></td>
+                      <td><button type="button" class="btn btn-primary" onclick="openClose(${post['idx']}, '${post['title']}', '${post['content']}')">수정</button></td>
                       <td><button type="button" class="btn btn-danger" onclick="deleteArticle(${post['idx']})">삭제</button></td>
                       </tr>
                     `;
@@ -165,8 +165,26 @@
             })
         }
 
-        function showArticleDetail(idx) {
+        function showArticleDetail(idx, title, content) {
+            $('#article-modal').modal('show');
 
+            $('.modal-title').html(title)
+            $('.modal-body').html(content)
+            $('.modal-close-btn').attr("onclick",`updateArticleLooked(${idx})`);
+        }
+
+        function updateArticleLooked(idx) {
+            $.ajax({
+                type: "UPDATE",
+                url: `/post/looked?idx=${idx}`,
+                success: function (response) { // 성공하면
+                    if (response["result"] == "success") {
+                        window.location.reload();
+                    } else {
+                        alert("서버 오류!");
+                    }
+                }
+            })
         }
 
     </script>
@@ -214,18 +232,18 @@
 </div>
 
 <!-- 메모 자세히 보기 -->
-<div class="modal" tabindex="-1" id="article-detail-modal">
+<div class="modal" tabindex="-1" id="article-modal">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="article-title">Modal title</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title">Modal title</h5>
+        <button type="button" class="btn-close modal-close-btn" data-bs-dismiss="modal" aria-label="Close" onclick></button>
       </div>
-      <div class="modal-body" id="article-body">
+      <div class="modal-body">
         <p>Modal body text goes here.</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary modal-close-btn" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>

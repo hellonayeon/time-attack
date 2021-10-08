@@ -71,25 +71,21 @@
                 $("#btn-post-box").text("포스팅 박스 닫기");
             }
 
-            console.log(idx)
             if(idx != undefined) {
                 $("#post-url").val(title);
                 $("#post-comment").val(content);
+                $("#post-save-btn").attr("onclick",`updateArticle(${idx})`);
             }
-
-            $("#post-save-btn").attr("onclick","postArticle('${idx}')");
+            else {
+                $("#post-save-btn").attr("onclick","postArticle()");
+            }
         }
 
-        function postArticle(idx) {
+        function postArticle() {
             let url = $("#post-url").val();
             let comment = $("#post-comment").val();
             var data = {'title': url, 'content': comment}
 
-            if(idx != undefined) {
-                data['idx'] = idx
-            }
-
-            // 2. memo에 POST 방식으로 메모 생성 요청하기
             $.ajax({
                 type: "POST",
                 url: "/post",
@@ -140,6 +136,26 @@
                 success: function (response) { // 성공하면
                     if (response["result"] == "success") {
                         alert("삭제 성공!");
+                        // 3. 성공 시 페이지 새로고침하기
+                        window.location.reload();
+                    } else {
+                        alert("서버 오류!");
+                    }
+                }
+            })
+        }
+
+        function updateArticle(idx) {
+            let url = $("#post-url").val();
+            let comment = $("#post-comment").val();
+
+            $.ajax({
+                type: "UPDATE",
+                url: "/post",
+                data: {'title': url, 'content': comment, 'idx': idx},
+                success: function (response) { // 성공하면
+                    if (response["result"] == "success") {
+                        alert("수정 성공!");
                         // 3. 성공 시 페이지 새로고침하기
                         window.location.reload();
                     } else {

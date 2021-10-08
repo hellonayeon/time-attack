@@ -53,7 +53,7 @@ def delete_post():
 
 @app.route('/post', methods=['UPDATE'])
 def update_post():
-    idx = request.form.get('idx')
+    idx = int(request.form.get('idx'))
     title = request.form.get('title')
     content = request.form.get('content')
     print(idx, title, content)

@@ -20,17 +20,21 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
             integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
             crossorigin="anonymous"></script>
+    <!-- jQuery Cookie -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
 
     <!-- 구글폰트 -->
-    <link href="https://fonts.googleapis.com/css?family=Stylish&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500&display=swap" rel="stylesheet">
 
 
-    <title>게시판 | 질문합시다</title>
+    <title>게시판 | 질문</title>
 
     <!-- style -->
     <style type="text/css">
         * {
-            font-family: "Stylish", sans-serif;
+            font-family: 'Hahmlet', serif;
         }
 
         .comment {
@@ -56,8 +60,12 @@
         let perPage = "5"; // 한 페이지당 보여줄 게시글 개수
 
         $(document).ready(function () {
+            toggleSignBtn();
+
             $("#cards-box").html("");
             showArticles(1);
+
+            // 페이지 당 출력할 게시글 변경 리스너
             $("#perPagingSelect").change(function () {
                 perPage = $(this).val();
                 showArticles(1)
@@ -76,8 +84,8 @@
             }
         }
 
-        function signToggle() {
-            if($('#btn-logout').css("display") == "none") {
+        function toggleSignBtn() {
+            if($.cookie('mytoken') != undefined) {
                 $('#btn-logout').show();
                 $('#btn-login').hide();
                 $('#btn-sign-in').hide();
@@ -89,15 +97,39 @@
             }
         }
 
+        function showSignModal(title) {
+            clearSignModal()
+
+            if(title == "회원가입") {
+                $('#sign-modal-title').html('회원가입');
+                $('#btn-ok-sign-modal').attr('onclick', '').unbind("click").on('click', signUp)
+            }
+            else {
+                $('#sign-modal-title').html('로그인');
+                $('#btn-ok-sign-modal').attr('onclick', '').unbind("click").on("click", login);
+
+            }
+            $('#signModal').modal('show');
+        }
+
+        function clearSignModal() {
+            $('#username').val(undefined);
+            $('#password').val(undefined);
+            console.log($('#username').val(), $('#password').val())
+        }
+
+        /* 아이디 패스워드 입력 확인 */
         function checkUserInfo(username, password) {
-            if(username == '') return "아이디를 입력해주세요!";
-            else if(password == '') return "패스워드를 입력해주세요!";
+            console.log(username, password)
+            if(username == undefined) return "아이디를 입력해주세요!";
+            else if(password == undefined) return "패스워드를 입력해주세요!";
             else return "success";
         }
 
+        /* 회원가입 */
         function signUp() {
-            let username = $("#username").val()
-            let password = $("#password").val()
+            let username = $("#username").val();
+            let password = $("#password").val();
 
             let msg = checkUserInfo(username, password);
             if(msg != "success") {
@@ -122,9 +154,10 @@
             })
         }
 
+        /* 로그인 */
         function login() {
-            let username = $("#userId").val()
-            let password = $("#userPassword").val()
+            let username = $("#username").val()
+            let password = $("#password").val()
 
             let msg = checkUserInfo(username, password);
             if(msg != "success") {
@@ -142,7 +175,7 @@
                 success: function(response) {
                     if (response['msg'] == 'success') {
                         $.cookie('mytoken', response['token'], {path: '/'});
-                        signToggle();
+                        toggleSignBtn();
                     } else {
                         alert(response['msg']);
                     }
@@ -150,11 +183,14 @@
             })
         }
 
+        /* 로그아웃 */
         function logout() {
             $.removeCookie('mytoken', {path: '/'});
             alert('로그아웃 완료!');
+            toggleSignBtn();
         }
 
+        /* 게시글 작성 및 업데이트 */
         function postingArticle() {
             let url = $("#post-url").val();
             let comment = $("#post-comment").val();
@@ -266,6 +302,7 @@
             })
         }
 
+        /* 게시글 목록 HTML 생성 */
         function makeListPost(post, index) {
             let tempHtml = ` <tr>
                       <th scope="row">${index}</th>
@@ -280,6 +317,7 @@
             $("#list-post").append(tempHtml);
         }
 
+        /* 게시글 삭제 */
         function deleteArticle(idx) {
             $.ajax({
                 type: "DELETE",
@@ -317,16 +355,16 @@
 <body>
 <div class="wrap">
     <div class="jumbotron">
-        <h1 class="display-4">✏️ 글을 남겨주세요.</h1>
+        <h1 class="display-4">✏️ 질문 게시판</h1>
         <hr class="my-4">
         <p class="lead">
             <button onclick="openClose()" id="btn-post-box" type="button" class="btn btn-primary">포스팅 박스 열기
             </button>
-            <button onclick="login()" id="btn-login" type="button" class="btn btn-secondary">로그인
+            <button onclick="showSignModal('로그인')" id="btn-login" type="button" class="btn btn-secondary">로그인
             </button>
             <button style="display: none" onclick="logout()" id="btn-logout" type="button" class="btn btn-danger">로그아웃
             </button>
-            <button onclick="signUp()" id="btn-sign-in" type="button" class="btn btn-success">회원가입
+            <button onclick="showSignModal('회원가입')" id="btn-sign-in" type="button" class="btn btn-success">회원가입
             </button>
         </p>
     </div>
@@ -416,20 +454,14 @@
                 </button>
             </div>
             <div class="modal-body" id="sign-modal-content">
-                <div class="form-group">
-                    <label for="username">아이디</label>
-                    <input type="text" class="form-control" id="username">
-                </div>
-                <div class="form-group">
-                    <label for="password">비밀번호</label>
-                    <input type="password" class="form-control" id="password">
-                </div>
+                <label for="username">아이디</label>
+                <input type="text" class="form-control" id="username">
+                <label for="password">비밀번호</label>
+                <input type="password" class="form-control" id="password">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal" id="btn-ok-sign-modal">확인</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="clearSignModal()">닫기</button>
+                 <button type="button" class="btn btn-primary" data-dismiss="modal" id="btn-ok-sign-modal" onclick="clearSignModal()">확인</button>
             </div>
         </div>
     </div>

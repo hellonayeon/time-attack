@@ -25,12 +25,12 @@ def sign_up():
     password = request.form['password']
     password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
 
-    username_exist = bool(db.article.find_one({"username": username}))
+    username_exist = bool(db.users.find_one({"username": username}))
     if username_exist:
         return jsonify({'msg': '이미 있는 아이디입니다! 다른 아이디를 입력해주세요!'})
 
     doc = {"username": username, "password": password_hash}
-    db.article.insert_one(doc)
+    db.users.insert_one(doc)
 
     return {'msg': 'success'}
 
@@ -42,7 +42,7 @@ def login():
     password = request.form['password']
 
     password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
-    result = db.article.find_one({'username': username, 'password': password_hash})
+    result = db.users.find_one({'username': username, 'password': password_hash})
 
     if result is not None:
         payload = {
@@ -59,15 +59,18 @@ def login():
 @app.route('/article', methods=['POST'])
 def save_post():
     token_receive = request.cookies.get('mytoken')
+    username = ""
     try:
         payload = jwt.decode(token_receive, JWT_SECRET_KEY, algorithms=['HS256'])
         username = payload["username"]
 
-    except jwt.ExpiredSignatureError:
-        return jsonify({"result": "fail", "msg": "로그인 시간이 만료되었습니다!"})
+    # 로그인 정보가 없는 경우
     except jwt.exceptions.DecodeError:
         username = "비회원"
+    except jwt.ExpiredSignatureError:
+        return jsonify({"result": "fail", "msg": "로그인 시간이 만료되었습니다!"})
 
+    finally:
         title = request.form.get('title')
         content = request.form.get('content')
         article_count = db.article.count()
@@ -81,7 +84,8 @@ def save_post():
             'title': title,
             'content': content,
             'read_count': 0,
-            'reg_date': datetime.now()
+            'reg_date': datetime.now(),
+            'username': username
         }
         db.article.insert_one(post)
         return {"result": "success"}
@@ -109,7 +113,7 @@ def get_posts():
                         .sort([("read_count", -1)]).skip(skip).limit(limit))
     else:
         articles = list(db.article.find(search_condition, {'_id': False})
-                        .sort([("reg_date", -1)]).skip(skip).limit(limit))
+                        .sort([("read_count", 1)]).skip(skip).limit(limit))
 
     for a in articles:
         a['reg_date'] = a['reg_date'].strftime('%Y.%m.%d %H:%M:%S')

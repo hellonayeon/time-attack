@@ -91,16 +91,27 @@ def save_post():
         return {"result": "success"}
 
 
-# 모든 게시글 내용
+# 모든 게시글 리스트
 @app.route('/articles', methods=['GET'])
 def get_posts():
     order = request.args.get('order')
     per_page = request.args.get('perPage')
     cur_page = request.args.get('curPage')
     search_title = request.args.get('searchTitle')
+    tab = request.args.get('tab')
+
+    # None 은 쿼리 파라미터 항목에 아예 없는 경우
     search_condition = {}
-    if search_title is not None:
-        search_condition = {"title": {"$regex": search_title}}
+    if search_title != '':
+        search_condition["title"] = {"$regex": search_title}
+    if tab != '':
+        try:
+            token_receive = request.cookies.get('mytoken')
+            payload = jwt.decode(token_receive, JWT_SECRET_KEY, algorithms=['HS256'])
+            username = payload["username"]
+            search_condition["username"] = username
+        except jwt.ExpiredSignatureError:
+            return jsonify({"result": "fail", "msg": "로그인 시간이 만료되었습니다!"})
 
     limit = int(per_page)
     skip = limit * (int(cur_page) - 1)
@@ -113,7 +124,7 @@ def get_posts():
                         .sort([("read_count", -1)]).skip(skip).limit(limit))
     else:
         articles = list(db.article.find(search_condition, {'_id': False})
-                        .sort([("read_count", 1)]).skip(skip).limit(limit))
+                        .sort([("reg_date", -1)]).skip(skip).limit(limit))
 
     for a in articles:
         a['reg_date'] = a['reg_date'].strftime('%Y.%m.%d %H:%M:%S')
@@ -126,7 +137,7 @@ def get_posts():
         "searchTitle": search_title
     }
 
-    return jsonify({"articles": articles, "pagingInfo": paging_info})
+    return jsonify({"result": "success", "articles": articles, "pagingInfo": paging_info})
 
 
 # 게시글 삭제

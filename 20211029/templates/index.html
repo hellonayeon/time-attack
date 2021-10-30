@@ -231,21 +231,34 @@
         }
 
         /* 게시글 출력 */
-        function showArticles(curPage) {
+        function showArticles(curPage, userTab) {
+            // 비회원일 경우 '나의 글 목록' 비활성화
+            if(userTab && $.cookie('mytoken') == undefined) {
+                alert("로그인한 사용자만 이용할 수 있습니다!")
+                return;
+            }
+
             let searchTitle = $("#searchTitle").val();
+            let tab = (userTab) ? true : '';
             $.ajax({
                 type: "GET",
-                url: `/articles?perPage=${perPage}&curPage=${curPage}&order=${order}&searchTitle=${searchTitle}`,
+                url: `/articles?perPage=${perPage}&curPage=${curPage}&order=${order}&searchTitle=${searchTitle}&tab=${tab}`,
                 data: {},
                 success: function (response) {
-                    $("#list-post").empty();
-                    let articles = response["articles"];
-                    let pagingInfo = response["pagingInfo"];
-                    for (let i = 0; i < articles.length; i++) {
-                        let num = response["pagingInfo"]["totalCount"] - (perPage * (curPage - 1)) - i
-                        makeListPost(articles[i], num);
+                    if(response["result"] == "success") {
+                        $("#list-post").empty();
+                        let articles = response["articles"];
+                        let pagingInfo = response["pagingInfo"];
+                        for (let i = 0; i < articles.length; i++) {
+                            let num = response["pagingInfo"]["totalCount"] - (perPage * (curPage - 1)) - i
+                            makeListPost(articles[i], num);
+                        }
+                        makePaging(pagingInfo);
                     }
-                    makePaging(pagingInfo);
+                    else {
+                        alert(response["msg"]);
+                        return;
+                    }
                 }
             })
         }
@@ -389,6 +402,14 @@
             <option value="15">15</option>
         </select>
     </div>
+    <ul class="nav nav-tabs">
+        <li class="nav-item" onclick="showArticles(1)">
+            <a class="nav-link active" data-toggle="tab" href="#">전체 글 목록</a>
+        </li>
+        <li class="nav-item" onclick="showArticles(1, true);">
+            <a class="nav-link" data-toggle="tab" href="#">나의 글 목록</a>
+        </li>
+    </ul>
     <table class="table">
         <thead>
         <tr>
@@ -410,7 +431,7 @@
         </tbody>
     </table>
     <nav aria-label="Page navigation example">
-        <ul class="pagination" style="justify-content: center; " id="pagination">
+        <ul class="pagination" style="justify-content: center;" id="pagination">
         </ul>
     </nav>
     <div class="input-group mb-3" style="width: 40%;margin: 0% 30%;">

@@ -102,9 +102,9 @@ def get_posts():
 
     # None 은 쿼리 파라미터 항목에 아예 없는 경우
     search_condition = {}
-    if search_title != '':
+    if not search_title:
         search_condition["title"] = {"$regex": search_title}
-    if tab != '':
+    if not tab:
         try:
             token_receive = request.cookies.get('mytoken')
             payload = jwt.decode(token_receive, JWT_SECRET_KEY, algorithms=['HS256'])

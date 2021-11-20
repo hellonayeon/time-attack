@@ -3,6 +3,6 @@ package com.example.timeattack.dto;
 import lombok.Getter;
 
 @Getter
-public class CommentRequestDto {
+public class ArticleCommentRequestDto {
     private String content;
 }

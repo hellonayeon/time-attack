@@ -20,7 +20,8 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
             integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
             crossorigin="anonymous"></script>
-    <script src="basic.js"></script>
+
+    <script src="view.js"></script>
 
     <!-- 구글폰트 -->
     <link href="https://fonts.googleapis.com/css?family=Stylish&display=swap" rel="stylesheet">
@@ -46,7 +47,8 @@
     </style>
     <script>
         $(document).ready(function() {
-            getArticle()
+            articleId = localStorage.getItem("articleId");
+            showArticle();
         })
     </script>
 
@@ -69,7 +71,7 @@
     <hr/>
     <textarea class="form-control" id="comment" rows="3"></textarea>
     <button type="button" class="btn btn-primary" onclick="saveComment()">댓글작성</button>
-    <button type="button" class="btn btn-primary" onclick="location.href='index.html'">목록으로</button>
+    <button type="button" class="btn btn-primary" onclick="localStorage.removeItem('articleId'); location.href='index.html';">목록으로</button>
     <hr/>
     <ul class="list-group" id="comment-list">
     </ul>

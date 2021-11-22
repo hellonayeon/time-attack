@@ -15,7 +15,7 @@ function openClose() {
 function showArticles() {
     $.ajax({
         type: "GET",
-        url: `/articles`,
+        url: `http://localhost:8080/articles`,
         success: function (response) {
             for(let i=0; i < response.length; i++) {
                 makeArticle(response);
@@ -50,7 +50,7 @@ function saveArticle() {
 
     $.ajax({
         type: "POST",
-        url: `/articles`,
+        url: `http://localhost:8080/articles`,
         contentType: "application/json",
         data: JSON.stringify({title: title, content: content}),
         success: function (response) {

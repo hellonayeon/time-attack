@@ -4,7 +4,7 @@ let articleId;
 function showArticle() {
     $.ajax({
         type: "GET",
-        url: `/articles/${articleId}`,
+        url: `http://localhost:8080/articles/${articleId}`,
         success: function (response) {
             $('#title').text(response.title);
             $('#content').text(response.content);
@@ -27,7 +27,7 @@ function saveComment() {
 
     $.ajax({
         type: "POST",
-        url: `/articles/${articleId}/comments`,
+        url: `http://localhost:8080/articles/${articleId}/comments`,
         contentType: "application/json",
         data: JSON.stringify({content: content}),
         success: function (response) {

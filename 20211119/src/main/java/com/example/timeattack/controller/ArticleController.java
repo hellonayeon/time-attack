@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:63342", maxAge = 3600)
 @RestController
 @RequiredArgsConstructor
 public class ArticleController {
@@ -27,8 +28,7 @@ public class ArticleController {
 
     @GetMapping("/articles/{id}")
     public Article getArticle(@PathVariable("id") Long id) {
-        Article a = articleService.getArticle(id);
-        return a;
+        return articleService.getArticle(id);
     }
 
     @PostMapping("/articles/{articleId}/comments")

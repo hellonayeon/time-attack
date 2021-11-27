@@ -1,5 +1,6 @@
 package com.example.timeattack.domain;
 
+import com.example.timeattack.dto.CommentRequestDto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,21 +12,21 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Tag extends Timestamped {
+public class Comment extends Timestamped {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private Long Id;
 
     @Column(nullable = false)
-    private String name;
+    private String content;
 
     @JsonIgnore
     @ManyToOne
-    @JoinColumn(name = "article_id")
+    @JoinColumn(name = "article_id", nullable = false)
     private Article article;
 
-    public Tag(String name, Article article) {
-        this.name = name;
+    public Comment(Article article, CommentRequestDto requestDto) {
         this.article = article;
+        this.content = requestDto.getContent();
     }
 }

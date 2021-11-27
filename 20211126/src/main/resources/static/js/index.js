@@ -1,5 +1,3 @@
-const WEB_SERVER_DOMAIN = "http://localhost:8080"
-
 $(document).ready(function () {
     getArticles();
 });
@@ -39,12 +37,14 @@ function postingArticle() {
 
 function getArticles() {
     let tag = $("#searchTag").val();
+
     $.ajax({
         type: "GET",
         url: `${WEB_SERVER_DOMAIN}/articles?searchTag=${tag}`,
         contentType: 'application/json; charset=utf-8',
         success: function (response) {
             $("#list-post").empty();
+            $("#searchTag").val('');
             for (let i = 0; i < response.length; i++) {
                 num = response.length - i;
                 makeListPost(response[i], num);
@@ -62,7 +62,7 @@ function makeListPost(article, index) {
 
     let tempHtml = ` <tr>
                       <th scope="row">${index}</th>
-                      <td><a href="/view?idx=${article['idx']}">${article['title']}</td>
+                      <td><a href="view.html?id=${article['id']}">${article['title']}</td>
                       <td>${article['comments'].length}</td>
                       <td>${tags}</td>
                       <td>${article['createdAt']}</td>

@@ -1,5 +1,3 @@
-const WEB_SERVER_DOMAIN = "http://localhost:8080"
-
 $(document).ready(function () {
     getArticles();
 });
@@ -62,7 +60,7 @@ function makeListPost(article, index) {
 
     let tempHtml = ` <tr>
                       <th scope="row">${index}</th>
-                      <td><a href="/view?idx=${article['idx']}">${article['title']}</td>
+                      <td><a href="view.html?id=${article['id']}">${article['title']}</td>
                       <td>${article['comments'].length}</td>
                       <td>${tags}</td>
                       <td>${article['createdAt']}</td>

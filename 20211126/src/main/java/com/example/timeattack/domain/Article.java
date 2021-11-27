@@ -24,15 +24,18 @@ public class Article extends Timestamped {
     @Column(nullable = false)
     private String content;
 
+    @OneToMany(mappedBy = "article")
+    private List<Comment> comments;
+
     @OneToMany(mappedBy = "article", cascade = CascadeType.ALL)
     private List<Tag> tags = new ArrayList<>();
 
     public Article(ArticleRequestDto requestDto) {
         this.title = requestDto.getTitle();
         this.content = requestDto.getContent();
-        String[] tags = requestDto.getTags().split(",");
-        for(String tag : tags) {
-            this.tags.add(new Tag(tag, this));
+        String[] tagNames = requestDto.getTags().split(",");
+        for(String name : tagNames) {
+            this.tags.add(new Tag(name, this));
         }
     }
 }

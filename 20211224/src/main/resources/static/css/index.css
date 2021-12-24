@@ -1,0 +1,22 @@
+* {
+    font-family: "Stylish", sans-serif;
+}
+
+.wrap {
+    width: 1200px;
+    margin: auto;
+}
+
+#post-box {
+    width: 500px;
+    margin: 20px auto;
+    padding: 50px;
+    border: black solid;
+    border-radius: 5px;
+}
+
+#page-size {
+    width: 100px;
+    float: right;
+    margin-bottom: 10px;
+}
